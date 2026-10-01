@@ -1,0 +1,110 @@
+
+import {tabulateApd} from "./tableApdPlot.js";
+
+const xSize = 500;
+const ySize = 345;
+const margin = 40;        
+const xMax = xSize - margin*2;
+const yMax = ySize - margin*2;        
+        
+const plotHist = d3.select("#myhistapd").append("svg");                
+
+export function histogramApdSvg (dados, data) {
+
+    plotHist.selectAll("g").remove();
+
+    
+    const result = Object.groupBy(dados, ({ Data }) => Data);
+    const dadosHist = Object.entries(result);
+    const parseTime = d3.utcParse("%d/%m/%Y");
+
+    dadosHist.sort((a, b) => parseTime(a[0]) - parseTime(b[0]));    
+
+    const svg = plotHist.append("g").attr("transform","translate(" + margin + "," + margin + ")");
+
+    // Sort array
+    
+    svg.append("g")
+    .append("text")    
+    .attr("x", 2)
+    .attr("y", -10)
+    .attr("font-size", 30)
+    .text("APD" )
+    .attr('fill', "hsl(196 70 88)");
+
+    svg.append("g")
+    .append("text")    
+    .attr("x", 2)
+    .attr("y", 300)
+    .attr("font-size", 10)
+    .text(data)
+    .attr('fill', "hsl(196 70 88)");    
+
+    svg.append("g")
+    .append("text")    
+    .attr("x", 375)
+    .attr("y", -2)
+    .attr("font-size", 50)
+    .text(`${dados.length}`)
+    .attr('fill', "hsl(196 70 88)");    
+
+    // X Axis
+    const xScale = d3.scaleBand()
+    .domain(dadosHist.map(d => d[0]))
+    .range([0, xMax])
+    .padding(0.1);
+    
+    svg.append("g")
+    .attr("transform", "translate(0," + yMax + ")")
+    .call(d3.axisBottom(xScale));
+
+    const dataList = [];
+    dadosHist.forEach((d) => {
+        dataList.push(d[0]);
+    });
+
+    // Y Axis
+    const yScale = d3.scaleLinear()
+    .domain([0, d3.max(dadosHist, d => d[1].length)])
+    .range([ yMax, 0])
+    .nice();
+
+    svg.append("g")
+    .call(d3.axisLeft(yScale));
+
+    // Dots
+    svg.append('g')
+    .selectAll("rect")
+    .data(dadosHist).enter()
+    .append("rect")        
+    .attr("x", d => xScale(d[0]))
+    .attr("y", yMax)
+    .attr("width", xScale.bandwidth())
+    .attr("height", 0)
+    .attr("fill", "hsl(196 70 28)")
+    .style("cursor", "pointer")        
+    .style("transition", "0.3s")   
+    .call(enter => enter.transition()
+        .attr("y", d => yScale(d[1].length))
+        .attr("height", d => yMax - yScale(d[1].length)
+        )
+    )
+    .on("click", function () {
+                    d3.selectAll("path")
+                    .style("opacity", "0.2");
+
+                    d3.selectAll("rect")
+                    .style("opacity", "0.2");
+                    
+                    d3.select(this)
+                    .style("opacity", "1");
+                    
+                    const selecao = d3.select(this)._groups[0][0].__data__[0];
+                    const result = dados.filter((d) => d["Data"] == selecao);
+
+                    tabulateApd(result);
+                })
+    .append("title")
+    .text(d => "" + d[0] + " - " + d[1].length + "");
+    
+};
