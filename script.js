@@ -4,24 +4,6 @@ const fileInput = document.querySelector("input[type=file]");
 
 var tokens = [];
 
-if (localStorage) {
-
-    var frase_ingles = localStorage.key(0).split("-")[1];
-    var frase_portugues = localStorage.getItem(localStorage.key(0));
-
-    tokens.push(frase_portugues);
-    tokens.push(tokenizacao(frase_ingles));
-    tokens.push(frase_ingles);
-    
-    treino.innerText = tokens[0];
-
-} else {
-
-    content.innerText = "Sem frases";
-
-}
-
-
 fileInput.addEventListener("change", previewFile);
 
 function previewFile() {
