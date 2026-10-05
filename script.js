@@ -1,122 +1,133 @@
-var idVideo = "M_ONGazIFsg";
+const content = document.querySelector(".content");
+const treino = document.getElementById("frase");
+const fileInput = document.querySelector("input[type=file]");
 
-const scrVideo = document.getElementById("player");
+var tokens = [];
 
-scrVideo.src = `https://www.youtube.com/embed/${idVideo}?enablejsapi=1&playsinline=1`;
+if (localStorage) {
 
+    var frase_ingles = localStorage.key(0).split("-")[1];
+    var frase_portugues = localStorage.getItem(localStorage.key(0));
 
+    tokens.push(frase_portugues);
+    tokens.push(tokenizacao(frase_ingles));
+    tokens.push(frase_ingles);
+    
+    treino.innerText = tokens[0];
 
-const input = document.getElementById("inputId");
-
-input.addEventListener("submit", (e) => {
-
-e.preventDefault();
-const formData = new FormData(input);
-var listaForm = [];
-for (var obj of formData) {
-    listaForm.push(obj);
-};         
-
-urlVideo = listaForm[0][1];
-
-var idVideo = urlVideo.split("v=")[1];
-
-scrVideo.src = `https://www.youtube.com/embed/${idVideo}?enablejsapi=1&playsinline=1`;
-
-})
-
-let timer;
-let count = 0;
-let inicio;
-let seconds;
-let tempo;
-
-
-
-function startCountdown() {
-
-myDisplayer(count);
-
-if (count !== 0) {
-    player.pauseVideo();
-    clearInterval(timer);
-    myDisplayer("Finished!");
-    tempo = count;
-    count = 0;
-    player.seekTo(seconds=inicio);
 } else {
 
-    player.playVideo();
-    seconds = undefined;
-    tempo = undefined;
-    inicio = player.getCurrentTime();
-    timer = setInterval(function() {
-    count++;
-    myDisplayer(count);
-    }, 1000);          
-
-}       
-
+    content.innerText = "Sem frases";
 
 }
 
 
-// Function to display any text
-function myDisplayer(text) {
-let demo = document.getElementById("demo"); 
-demo.innerHTML = text;
-}        
-// 2. This code loads the IFrame Player API code asynchronously.
-var tag = document.createElement('script');
+fileInput.addEventListener("change", previewFile);
 
-tag.src = "https://www.youtube.com/iframe_api";
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+function previewFile() {
+  const file = fileInput.files[0];
+  const reader = new FileReader();
 
-// 3. This function creates an <iframe> (and YouTube player)
-//    after the API code downloads.
-var player;
+  reader.addEventListener("load", () => {
+    // this will then display a text file
+    content.innerText = "Importado!!!";
+    const linhas = reader.result.split(/\r\n|\n/);
+    escrever(linhas);
 
-function onYouTubeIframeAPIReady() {
-player = new YT.Player('player', {
-    events: {
-    'onReady': onPlayerReady,
-    'onStateChange': onPlayerStateChange
-    }
-});
-}
 
-// 4. The API will call this function when the video player is ready.
-function onPlayerReady(event) {
-event.target.playVideo();
-}
+  });
 
-// 5. The API calls this function when the player's state changes.
-//    The function indicates that when playing a video (state=1),
-//    the player should play for six seconds and then stop.
-
-function onPlayerStateChange(event) {
-if (event.data == YT.PlayerState.PLAYING && tempo) {
-    setTimeout(seekTo, tempo * 1000);
+  if (file) {
     
-}
-}
-
-
-function seekTo() {
-player.seekTo(seconds=inicio);
-player.pauseVideo();
-
-
+    reader.readAsText(file);
+    
+  }
 }
 
-function limparLoop() {
+function escrever(linhas) {
 
-tempo = undefined;
-count = 0;
-clearInterval(timer);
-myDisplayer("Limpado!");        
+    for (var i = 0; i < linhas.length; i = i + 2) {
+        localStorage.setItem(`${i}-` + linhas[i], linhas[i + 1]);
+    }  
 
-}              
+}
+
+
+
+function tokenizacao(frase) {
+    
+    const caracteres = ['.', '\n', '?', '¿', ',', '¡', '!'];
+
+    caracteres.forEach(c => {
+        frase = frase.split(c).join('');
+    });
+
+    let tokens = frase
+    .split(' ')
+    .map(token => token.toLowerCase());
+
+    // Embaralhamento (Fisher-Yates)
+    for (let i = tokens.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [tokens[i], tokens[j]] = [tokens[j], tokens[i]];
+    }
+
+    return tokens.join(' ') + ' ';
+}
+
+
+
+
+function mudarFrase() {
+
+    var lista = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+
+        lista.push([localStorage.key(i).split("-")[0], localStorage.key(i).split("-")[1], localStorage.getItem(localStorage.key(i))]);
+
+
+    }
+
+    lista.sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+    var frases = lista.shift();
+
+    lista.push(frases);
+
+    localStorage.clear();
+
+    for (var i = 0; i < lista.length; i++) {
+        localStorage.setItem(`${i}-` + lista[i][1], lista[i][2]);
+    }
+
+    tokens[0] = lista[0][2];
+    tokens[1] = tokenizacao(lista[0][1]);
+    tokens[2] = lista[0][1];
+
+    treino.innerText = tokens[0];
+
+
+}
+
+function alteracao() {
+
+    var primeiro = tokens.shift();
+    tokens.push(primeiro);
+    treino.innerText = tokens[0];   
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
